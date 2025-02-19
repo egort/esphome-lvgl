@@ -8,6 +8,12 @@ wifi:
   ssid: !secret wifi_ssid
   password: !secret wifi_password
 
+mqtt:
+  broker: 10.168.1.4
+  port: 1883
+  username: !secret mqtt_user
+  password: !secret mqtt_password
+
 web_server:
   port: 80
 
@@ -21,6 +27,19 @@ binary_sensor:
     name: Status
 
 sensor:
+
+  - platform: mqtt_subscribe
+    name: "Temperature"
+    id: temp_sensor
+    state_topic: "main/temp1"
+    unit_of_measurement: "°C"
+    on_value:
+      then:
+        - lambda: |-
+            char buf[16];
+            sprintf(buf, "%.1f °C", x);
+            id(temp_label).set_text(buf);
+            
   - id: wifi_signal_db
     name: WiFi Signal
     platform: wifi_signal
@@ -35,6 +54,18 @@ sensor:
       - lambda: return min(max(2 * (x + 100.0), 0.0), 100.0);
     unit_of_measurement: "%"
     entity_category: diagnostic
+    
+  - platform: mqtt_subscribe
+    name: "Temperature"
+    id: temp_sensor
+    state_topic: "main/temp1"
+    unit_of_measurement: "°C"
+    on_value:
+      then:
+        - lambda: |-
+            char buf[16];
+            sprintf(buf, "Temp: %.1f °C", x);
+            lv_label_set_text(id(temperature_label), buf);
 
 text_sensor:
   - platform: wifi_info
